@@ -27,7 +27,8 @@ export class ContainersMonitoringStack extends cdk.Stack {
         })
 
         // Our task definition using the Fargate cluster above.
-        const nodeServerTask = new ecs.FargateTaskDefinition(this, 'NodeWebServer', {})
+        const nodeServerTask = new ecs.FargateTaskDefinition(this, 'NodeWebServer', {
+        })
 
         // Add permission to our task definition to send XRay Traces
         nodeServerTask.addToTaskRolePolicy(new iam.PolicyStatement({
@@ -101,5 +102,17 @@ export class ContainersMonitoringStack extends cdk.Stack {
         })
         // Configure a healthcheck
         serviceWithAlb.targetGroup.configureHealthCheck({path: "/healthcheck"})
+        const scalableTarget = serviceWithAlb.service.autoScaleTaskCount({
+            minCapacity: 1,
+            maxCapacity: 20,
+        });
+
+        scalableTarget.scaleOnCpuUtilization('CpuScaling', {
+            targetUtilizationPercent: 50,
+        });
+
+        scalableTarget.scaleOnMemoryUtilization('MemoryScaling', {
+            targetUtilizationPercent: 50,
+        });
     }
 }
